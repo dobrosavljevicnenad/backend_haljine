@@ -16,4 +16,4 @@ COPY . .
 EXPOSE 3000
 
 # ▶️ Komanda za pokretanje aplikacije
-CMD ["node", "app.js"]
+CMD ["node", "server.js"]
