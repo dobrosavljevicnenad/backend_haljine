@@ -55,4 +55,3 @@ Full stack web application for managing boutique dress inventory with real-time 
 - Transaction-based stock updates  
 - Concurrency-safe inventory system  
 
----
