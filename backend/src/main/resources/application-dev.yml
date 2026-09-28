@@ -1,0 +1,5 @@
+# Local development profile: activate with SPRING_PROFILES_ACTIVE=dev
+logging:
+  level:
+    io.github.dobrosavljevicnenad.dressinventory: DEBUG
+    org.hibernate.SQL: DEBUG
