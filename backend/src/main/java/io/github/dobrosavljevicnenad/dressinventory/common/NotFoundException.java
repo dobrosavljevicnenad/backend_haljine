@@ -12,6 +12,10 @@ public class NotFoundException extends RuntimeException {
         return new NotFoundException("Haljina nije pronađena (id: " + id + ")");
     }
 
+    public static NotFoundException color(String dressName, String color) {
+        return new NotFoundException("Haljina " + dressName + " sa bojom " + color + " nije pronađena");
+    }
+
     public static NotFoundException order(UUID id) {
         return new NotFoundException("Narudžbina nije pronađena (id: " + id + ")");
     }
