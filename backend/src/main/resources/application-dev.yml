@@ -3,3 +3,11 @@ logging:
   level:
     io.github.dobrosavljevicnenad.dressinventory: DEBUG
     org.hibernate.SQL: DEBUG
+
+# Local-only credentials. Production values come from environment variables.
+app:
+  security:
+    admin:
+      password: "{noop}admin"
+    jwt:
+      secret: local-development-secret-do-not-use-in-production

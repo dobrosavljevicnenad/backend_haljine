@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,6 +35,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ConflictException.class)
     ProblemDetail handleConflict(ConflictException ex) {
         return problem(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    ProblemDetail handleFailedLogin(AuthenticationException ex) {
+        return problem(HttpStatus.UNAUTHORIZED, "Neispravno korisničko ime ili šifra");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

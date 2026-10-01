@@ -33,3 +33,14 @@ management:
     health:
       probes:
         enabled: true
+
+app:
+  security:
+    admin:
+      username: ${APP_ADMIN_USERNAME:admin}
+      # Use a bcrypt hash in production: {bcrypt}$2a$10$...
+      password: ${APP_ADMIN_PASSWORD:}
+    jwt:
+      secret: ${APP_JWT_SECRET:}
+      ttl: 2h
+    cors-allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:4200}
