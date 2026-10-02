@@ -56,7 +56,7 @@ class DressController {
     @DeleteMapping("/haljine/{id}")
     MessageResponse delete(@PathVariable UUID id) {
         dresses.delete(id);
-        return new MessageResponse("Haljina je obrisana.");
+        return new MessageResponse("Haljina i slika su uspešno obrisane.");
     }
 
     @PostMapping("/dodajKolicinu/{id}")

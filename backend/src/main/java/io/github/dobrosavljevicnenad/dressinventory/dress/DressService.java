@@ -4,6 +4,8 @@ import io.github.dobrosavljevicnenad.dressinventory.common.NotFoundException;
 import io.github.dobrosavljevicnenad.dressinventory.dress.DressDtos.DressRequest;
 import io.github.dobrosavljevicnenad.dressinventory.dress.DressDtos.DressUpdateRequest;
 import io.github.dobrosavljevicnenad.dressinventory.dress.DressDtos.StockItemRequest;
+import io.github.dobrosavljevicnenad.dressinventory.media.ImagesReleasedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +20,12 @@ public class DressService {
 
     private final DressRepository dresses;
     private final StockItemRepository stock;
+    private final ApplicationEventPublisher events;
 
-    public DressService(DressRepository dresses, StockItemRepository stock) {
+    public DressService(DressRepository dresses, StockItemRepository stock, ApplicationEventPublisher events) {
         this.dresses = dresses;
         this.stock = stock;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -37,6 +41,7 @@ public class DressService {
 
     public Dress update(UUID id, DressUpdateRequest request) {
         Dress dress = dresses.findWithStockById(id).orElseThrow(() -> NotFoundException.dress(id));
+        String previousImage = dress.getImageUrl();
         if (request.name() != null) {
             dress.setName(request.name().trim());
         }
@@ -49,12 +54,16 @@ public class DressService {
         if (request.stock() != null) {
             dress.replaceStock(normalize(request.stock()));
         }
+        if (previousImage != null && !previousImage.equals(dress.getImageUrl())) {
+            events.publishEvent(ImagesReleasedEvent.of(previousImage));
+        }
         return dress;
     }
 
     public Dress delete(UUID id) {
         Dress dress = dresses.findById(id).orElseThrow(() -> NotFoundException.dress(id));
         dresses.delete(dress);
+        events.publishEvent(ImagesReleasedEvent.of(dress.getImageUrl()));
         return dress;
     }
 

@@ -4,6 +4,8 @@ import io.github.dobrosavljevicnenad.dressinventory.common.NotFoundException;
 import io.github.dobrosavljevicnenad.dressinventory.dress.Dress;
 import io.github.dobrosavljevicnenad.dressinventory.dress.DressRepository;
 import io.github.dobrosavljevicnenad.dressinventory.dress.StockItemRepository;
+import io.github.dobrosavljevicnenad.dressinventory.media.ImagesReleasedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +20,14 @@ public class OrderService {
     private final DressRepository dresses;
     private final StockItemRepository stock;
     private final OrderRepository orders;
+    private final ApplicationEventPublisher events;
 
-    public OrderService(DressRepository dresses, StockItemRepository stock, OrderRepository orders) {
+    public OrderService(DressRepository dresses, StockItemRepository stock, OrderRepository orders,
+                        ApplicationEventPublisher events) {
         this.dresses = dresses;
         this.stock = stock;
         this.orders = orders;
+        this.events = events;
     }
 
     public CustomerOrder placeOrder(UUID dressId, String color, int quantity, String paymentScreenshotUrl) {
@@ -52,12 +57,21 @@ public class OrderService {
     public CustomerOrder delete(UUID id) {
         CustomerOrder order = orders.findById(id).orElseThrow(() -> NotFoundException.order(id));
         orders.delete(order);
+        String screenshot = order.getPaymentScreenshotUrl();
+        // other lines of the same checkout may still reference the screenshot
+        if (screenshot != null && !orders.existsByPaymentScreenshotUrl(screenshot)) {
+            events.publishEvent(ImagesReleasedEvent.of(screenshot));
+        }
         return order;
     }
 
     /** Deletes all lines of one checkout, identified by its payment screenshot. */
     public long deleteGroup(String paymentScreenshotUrl) {
-        return orders.deleteByPaymentScreenshotUrl(paymentScreenshotUrl);
+        long deleted = orders.deleteByPaymentScreenshotUrl(paymentScreenshotUrl);
+        if (deleted > 0) {
+            events.publishEvent(ImagesReleasedEvent.of(paymentScreenshotUrl));
+        }
+        return deleted;
     }
 
     /**

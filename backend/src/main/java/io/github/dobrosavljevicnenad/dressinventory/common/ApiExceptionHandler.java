@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -60,6 +61,21 @@ public class ApiExceptionHandler {
     })
     ProblemDetail handleMalformedRequest(Exception ex) {
         return problem(HttpStatus.BAD_REQUEST, "Neispravan format zahteva");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ProblemDetail handleTooLargeUpload(MaxUploadSizeExceededException ex) {
+        return problem(HttpStatus.CONTENT_TOO_LARGE, "Fajl je prevelik (maksimalno 10 MB)");
+    }
+
+    @ExceptionHandler(ExternalServiceException.class)
+    ProblemDetail handleExternalService(ExternalServiceException ex) {
+        return problem(HttpStatus.BAD_GATEWAY, ex.getMessage());
+    }
+
+    @ExceptionHandler(ServiceUnavailableException.class)
+    ProblemDetail handleUnavailable(ServiceUnavailableException ex) {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
     }
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
