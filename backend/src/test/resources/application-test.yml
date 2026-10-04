@@ -1,0 +1,8 @@
+app:
+  security:
+    admin:
+      username: admin
+      password: "{noop}test-password"
+    jwt:
+      secret: test-secret-that-is-at-least-32-characters-long
+    cors-allowed-origins: http://localhost:4200

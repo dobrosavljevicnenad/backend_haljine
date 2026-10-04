@@ -1,5 +1,6 @@
 package io.github.dobrosavljevicnenad.dressinventory.config;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -40,6 +41,7 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
+@EnableConfigurationProperties(SecurityProperties.class)
 public class SecurityConfig {
 
     @Bean
@@ -60,6 +62,11 @@ public class SecurityConfig {
                         .authenticationEntryPoint(entryPoint))
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(entryPoint));
         return http.build();
+    }
+
+    @Bean
+    AuthenticationEntryPoint authenticationEntryPoint() {
+        return new JsonAuthenticationEntryPoint();
     }
 
     @Bean

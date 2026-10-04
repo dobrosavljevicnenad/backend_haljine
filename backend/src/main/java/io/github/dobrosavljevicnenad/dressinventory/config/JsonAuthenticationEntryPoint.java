@@ -6,7 +6,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +14,6 @@ import java.nio.charset.StandardCharsets;
  * Returns 401 as a Problem Details JSON body (instead of an empty response),
  * consistent with all other API errors.
  */
-@Component
 class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private static final String MESSAGE = "Token nije prosleđen ili nije važeći";
