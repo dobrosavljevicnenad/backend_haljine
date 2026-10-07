@@ -20,3 +20,9 @@ target/
 .DS_Store
 Thumbs.db
 
+
+# Java IDE metadata
+.classpath
+.project
+.settings/
+.factorypath

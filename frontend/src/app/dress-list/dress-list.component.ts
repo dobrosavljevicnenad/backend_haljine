@@ -1,264 +1,259 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, forkJoin } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { InventoryApiService } from '../core/inventory-api.service';
-import { CartItem, Dress, NewDress, Order } from '../core/models';
+import { CartItem, Dress, NewDress, Order, OrderGroup } from '../core/models';
+import { LoginComponent } from '../login/login.component';
+import { OrderHistoryComponent } from '../orders/order-history.component';
 
+/**
+ * Admin dashboard: catalog management, stock per color, cart checkout and order history.
+ */
 @Component({
   selector: 'app-dress-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, LoginComponent, OrderHistoryComponent],
   templateUrl: './dress-list.component.html',
   styleUrls: ['./dress-list.component.scss'],
 })
 export class DressListComponent implements OnInit {
-  private readonly auth = inject(AuthService);
+  protected readonly auth = inject(AuthService);
   private readonly api = inject(InventoryApiService);
 
-  haljine: Dress[] = [];
-  narudzbine: Order[] = [];
-  ucitavanje = false;
-  filterBoja = '';
-  filterName = '';
-  screenshotUploadInProgress = false;
-  uploadInProgress = false;
-  korpa: CartItem[] = [];
-  datumOd = '';
-  datumDo = '';
+  dresses: Dress[] = [];
+  orders: Order[] = [];
+  loading = false;
 
-  novaHaljina: NewDress = emptyDress();
+  colorFilter = '';
+  nameFilter = '';
 
-  izabranaHaljina: Dress | null = null;
-  izabranaBoja = '';
-  formaKupca = { screenshot: '' };
+  newDress: NewDress = emptyDress();
+  imageUploading = false;
 
-  novaBoja: Record<string, string> = {};
-  novaKolicina: Record<string, number> = {};
+  restockColor: Record<string, string> = {};
+  restockQuantity: Record<string, number> = {};
 
-  username = '';
-  password = '';
-
-  get token(): string | null {
-    return this.auth.token();
-  }
+  cart: CartItem[] = [];
+  selectedDress: Dress | null = null;
+  selectedColor = '';
+  screenshotUrl = '';
+  screenshotUploading = false;
 
   ngOnInit(): void {
     if (this.auth.isLoggedIn()) {
-      this.ucitaj();
-      this.ucitajNarudzbine();
+      this.reload();
     }
   }
 
-  login(): void {
-    this.auth.login(this.username, this.password).subscribe({
-      next: () => {
-        this.username = '';
-        this.password = '';
-        this.ucitaj();
-        this.ucitajNarudzbine();
-      },
-      error: () => alert('❌ Neispravni podaci'),
-    });
+  onLoggedIn(): void {
+    this.reload();
   }
 
   logout(): void {
     this.auth.logout();
-    this.haljine = [];
-    this.narudzbine = [];
-    this.korpa = [];
-    this.ucitavanje = false;
+    this.dresses = [];
+    this.orders = [];
+    this.cart = [];
   }
 
-  resetujFilter(): void {
-    this.datumOd = '';
-    this.datumDo = '';
+  get visibleDresses(): Dress[] {
+    const color = this.colorFilter.trim().toLowerCase();
+    const name = this.nameFilter.trim().toLowerCase();
+    return this.dresses.filter(dress =>
+      (!color || dress.lager.some(stock => stock.boja.toLowerCase().includes(color))) &&
+      (!name || dress.naziv.toLowerCase().includes(name)));
   }
 
-  ucitaj(): void {
-    this.ucitavanje = true;
-    this.api.getDresses().subscribe({
-      next: data => (this.haljine = data),
-      error: err => {
-        console.error('Greška pri učitavanju haljina:', err);
-        this.haljine = [];
-        this.ucitavanje = false;
+  get cartTotal(): number {
+    return this.cart.reduce((sum, item) => sum + item.cena * item.kolicina, 0);
+  }
+
+  // ---- catalog -------------------------------------------------------------
+
+  addStockRow(): void {
+    this.newDress.lager.push({ boja: '', kolicina: 0 });
+  }
+
+  uploadDressImage(event: Event): void {
+    const file = selectedFile(event);
+    if (!file) return;
+    this.imageUploading = true;
+    this.api.uploadImage(file).subscribe({
+      next: ({ url }) => {
+        this.newDress.slika = url;
+        this.imageUploading = false;
       },
-      complete: () => (this.ucitavanje = false),
+      error: error => {
+        this.imageUploading = false;
+        this.fail('Upload slike nije uspeo.')(error);
+      },
     });
   }
 
-  ucitajNarudzbine(): void {
-    this.api.getOrders().subscribe({
-      next: data => (this.narudzbine = data),
-      error: err => console.error('Greška pri učitavanju narudžbina:', err),
+  addDress(): void {
+    this.api.createDress(this.newDress).subscribe({
+      next: () => {
+        this.newDress = emptyDress();
+        this.loadDresses();
+      },
+      error: this.fail('Haljina nije dodata.'),
     });
   }
 
-  dodajHaljinu(): void {
-    this.api.createDress(this.novaHaljina).subscribe(() => {
-      this.ucitaj();
-      this.novaHaljina = emptyDress();
+  restock(dress: Dress): void {
+    const color = (this.restockColor[dress._id] ?? '').trim();
+    const quantity = Number(this.restockQuantity[dress._id] ?? 0);
+    if (!color || quantity <= 0) return;
+    this.api.addStock(dress._id, color, quantity).subscribe({
+      next: () => {
+        this.restockColor[dress._id] = '';
+        this.restockQuantity[dress._id] = 0;
+        this.loadDresses();
+      },
+      error: this.fail('Količina nije ažurirana.'),
     });
   }
 
-  dodajUKorpu(haljina: Dress, boja: string): void {
-    const postojeca = this.korpa.find(item => item._id === haljina._id && item.boja === boja);
-    if (postojeca) {
-      postojeca.kolicina += 1;
+  removeColor(dress: Dress, color: string): void {
+    if (!confirm(`Da li želiš da obrišeš boju "${color}"?`)) return;
+    this.api.removeColor(dress._id, color).subscribe({
+      next: () => (dress.lager = dress.lager.filter(stock => stock.boja !== color)),
+      error: this.fail('Greška pri brisanju boje.'),
+    });
+  }
+
+  deleteDress(dress: Dress): void {
+    if (!confirm('Da li si siguran da želiš da obrišeš ovu haljinu?')) return;
+    this.api.deleteDress(dress._id).subscribe({
+      next: () => (this.dresses = this.dresses.filter(d => d._id !== dress._id)),
+      error: this.fail('Haljina nije obrisana.'),
+    });
+  }
+
+  // ---- ordering ------------------------------------------------------------
+
+  addToCart(dress: Dress, color: string): void {
+    const existing = this.cart.find(item => item._id === dress._id && item.boja === color);
+    if (existing) {
+      existing.kolicina += 1;
     } else {
-      this.korpa.push({ _id: haljina._id, naziv: haljina.naziv, slika: haljina.slika, cena: haljina.cena, boja, kolicina: 1 });
+      this.cart.push({ _id: dress._id, naziv: dress.naziv, slika: dress.slika, cena: dress.cena, boja: color, kolicina: 1 });
     }
   }
 
-  ukloniIzKorpe(index: number): void {
-    this.korpa.splice(index, 1);
+  removeFromCart(index: number): void {
+    this.cart.splice(index, 1);
   }
 
-  posaljiKorpu(): void {
-    if (this.korpa.length === 0) {
-      alert('Korpa je prazna.');
-      return;
-    }
-    this.api.placeCartOrder(this.korpa, this.formaKupca.screenshot).subscribe({
+  checkoutCart(): void {
+    if (this.cart.length === 0) return;
+    this.api.placeCartOrder(this.cart, this.screenshotUrl).subscribe({
       next: () => {
         alert('✅ Uspešno ste poručili više haljina!');
-        this.korpa = [];
-        this.formaKupca = { screenshot: '' };
-        this.screenshotUploadInProgress = false;
-        this.ucitaj();
-        this.ucitajNarudzbine();
+        this.cart = [];
+        this.screenshotUrl = '';
+        this.reload();
       },
-      error: () => alert('❌ Greška pri slanju porudžbine iz korpe.'),
+      error: this.fail('Greška pri slanju porudžbine iz korpe.'),
     });
   }
 
-  dodajBojuPolje(): void {
-    this.novaHaljina.lager.push({ boja: '', kolicina: 0 });
+  openOrderDialog(dress: Dress, color: string): void {
+    this.selectedDress = dress;
+    this.selectedColor = color;
+    this.screenshotUrl = '';
   }
 
-  uploadSlika(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    this.uploadInProgress = true;
-    this.api.uploadImage(file).subscribe({
-      next: res => {
-        this.novaHaljina.slika = res.url;
-        this.uploadInProgress = false;
-      },
-      error: () => (this.uploadInProgress = false),
-    });
+  closeOrderDialog(): void {
+    this.selectedDress = null;
   }
 
-  dodajIliAzurirajBoju(id: string, boja: string, kolicina: number): void {
-    if (!boja || !kolicina) return;
-    this.api.addStock(id, boja, kolicina).subscribe(() => {
-      const haljina = this.haljine.find(h => h._id === id);
-      if (!haljina) return;
-      const postojeca = haljina.lager.find(l => l.boja === boja);
-      if (postojeca) {
-        postojeca.kolicina += kolicina;
-      } else {
-        haljina.lager.push({ boja, kolicina });
-      }
-      this.novaBoja[id] = '';
-      this.novaKolicina[id] = 0;
-    });
-  }
-
-  obrisiHaljinu(id: string): void {
-    if (!confirm('Da li si siguran da želiš da obrišeš ovu haljinu?')) return;
-    this.api.deleteDress(id).subscribe(() => {
-      this.haljine = this.haljine.filter(h => h._id !== id);
-    });
-  }
-
-  otvoriFormuZaNarudzbinu(haljina: Dress, boja: string): void {
-    this.izabranaHaljina = haljina;
-    this.izabranaBoja = boja;
-    this.formaKupca = { screenshot: '' };
-  }
-
-  posaljiNarudzbinu(): void {
-    const haljina = this.izabranaHaljina;
-    if (!haljina) return;
-    this.api.placeOrder(haljina._id, this.izabranaBoja, 1, this.formaKupca.screenshot).subscribe({
+  placeSingleOrder(): void {
+    const dress = this.selectedDress;
+    if (!dress) return;
+    this.api.placeOrder(dress._id, this.selectedColor, 1, this.screenshotUrl).subscribe({
       next: () => {
-        this.izabranaHaljina = null;
-        this.ucitaj();
-        this.ucitajNarudzbine();
+        this.closeOrderDialog();
+        this.reload();
       },
-      error: () => alert('❌ Greška pri naručivanju.'),
+      error: this.fail('Greška pri naručivanju.'),
     });
   }
 
   uploadScreenshot(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
+    const file = selectedFile(event);
     if (!file) return;
-    this.screenshotUploadInProgress = true;
+    this.screenshotUploading = true;
     this.api.uploadImage(file).subscribe({
-      next: res => {
-        this.formaKupca.screenshot = res.url;
-        this.screenshotUploadInProgress = false;
+      next: ({ url }) => {
+        this.screenshotUrl = url;
+        this.screenshotUploading = false;
       },
-      error: () => {
-        alert('Greška pri uploadu slike.');
-        this.screenshotUploadInProgress = false;
+      error: error => {
+        this.screenshotUploading = false;
+        this.fail('Greška pri uploadu slike.')(error);
       },
     });
   }
 
-  get filteredHaljine(): Dress[] {
-    const boja = this.filterBoja.trim().toLowerCase();
-    if (!boja) return this.haljine;
-    return this.haljine.filter(h => h.lager.some(l => l.boja.toLowerCase().includes(boja)));
-  }
+  // ---- order history -------------------------------------------------------
 
-  get filterByName(): Dress[] {
-    const name = this.filterName.trim().toLowerCase();
-    if (!name) return this.filteredHaljine;
-    return this.filteredHaljine.filter(h => h.naziv.toLowerCase().includes(name));
-  }
-
-  get grupisaneNarudzbine(): { kupac: { screenshot: string | null; vreme: string }; proizvodi: Order[] }[] {
-    const grupe: Record<string, { kupac: { screenshot: string | null; vreme: string }; proizvodi: Order[] }> = {};
-    const od = this.datumOd ? new Date(this.datumOd) : null;
-    const doDatuma = this.datumDo ? new Date(this.datumDo) : null;
-
-    for (const n of this.narudzbine) {
-      const vreme = new Date(n.vreme);
-      if (od && vreme < od) continue;
-      if (doDatuma && vreme > doDatuma) continue;
-
-      const key = `${n.screenshot}|${vreme.toISOString().slice(0, 16)}`;
-      grupe[key] ??= { kupac: { screenshot: n.screenshot, vreme: n.vreme }, proizvodi: [] };
-      grupe[key].proizvodi.push(n);
-    }
-    return Object.values(grupe);
-  }
-
-  obrisiGrupuNarudzbina(screenshot: string | null): void {
-    if (!screenshot || !confirm('Da li si siguran da želiš da obrišeš ovu porudžbinu?')) return;
-    this.api.deleteOrderGroup(screenshot).subscribe({
-      next: () => this.ucitajNarudzbine(),
-      error: () => alert('❌ Nije obrisana grupa porudžbina.'),
+  deleteOrderGroup(group: OrderGroup): void {
+    if (!confirm('Da li si siguran da želiš da obrišeš ovu porudžbinu?')) return;
+    const request: Observable<unknown> = group.screenshot
+      ? this.api.deleteOrderGroup(group.screenshot)
+      : forkJoin(group.proizvodi.map(order => this.api.deleteOrder(order._id)));
+    request.subscribe({
+      next: () => this.loadOrders(),
+      error: this.fail('Porudžbina nije obrisana.'),
     });
   }
 
-  obrisiBoju(haljinaId: string, boja: string): void {
-    if (!confirm(`Da li želiš da obrišeš boju "${boja}"?`)) return;
-    this.api.removeColor(haljinaId, boja).subscribe({
-      next: () => {
-        const haljina = this.haljine.find(h => h._id === haljinaId);
-        if (haljina) {
-          haljina.lager = haljina.lager.filter(b => b.boja !== boja);
-        }
+  deleteOrder(order: Order): void {
+    if (!confirm(`Obrisati stavku "${order.naziv} (${order.boja})"?`)) return;
+    this.api.deleteOrder(order._id).subscribe({
+      next: () => (this.orders = this.orders.filter(o => o._id !== order._id)),
+      error: this.fail('Stavka nije obrisana.'),
+    });
+  }
+
+  // ---- helpers -------------------------------------------------------------
+
+  private reload(): void {
+    this.loadDresses();
+    this.loadOrders();
+  }
+
+  private loadDresses(): void {
+    this.loading = true;
+    this.api.getDresses().subscribe({
+      next: dresses => {
+        this.dresses = dresses;
+        this.loading = false;
       },
-      error: () => alert('❌ Greška pri brisanju boje.'),
+      error: () => (this.loading = false),
     });
+  }
+
+  private loadOrders(): void {
+    this.api.getOrders().subscribe({ next: orders => (this.orders = orders) });
+  }
+
+  /** Shows the message returned by the API (e.g. "Nema dovoljno na lageru ...") or a fallback text. */
+  private fail(fallback: string): (error: unknown) => void {
+    return error => {
+      const apiMessage = error instanceof HttpErrorResponse ? error.error?.error : null;
+      alert(`❌ ${typeof apiMessage === 'string' ? apiMessage : fallback}`);
+    };
   }
 }
 
 function emptyDress(): NewDress {
   return { naziv: '', slika: '', cena: 0, lager: [{ boja: '', kolicina: 0 }] };
+}
+
+function selectedFile(event: Event): File | undefined {
+  return (event.target as HTMLInputElement).files?.[0];
 }

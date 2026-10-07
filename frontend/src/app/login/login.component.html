@@ -1,0 +1,37 @@
+<form (ngSubmit)="submit()"
+      class="max-w-sm mx-auto mt-20 bg-white rounded-2xl shadow-xl px-8 py-10 border border-gray-200">
+  <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">🔐 Prijava</h2>
+
+  <div class="mb-5">
+    <label for="username" class="block text-sm font-medium text-gray-600 mb-1">Korisničko ime</label>
+    <div class="flex items-center border rounded-md px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-200">
+      <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M5.121 17.804A6 6 0 0112 15a6 6 0 016.879 2.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      <input id="username" name="username" [(ngModel)]="username" placeholder="Unesi korisničko ime"
+             class="flex-1 outline-none text-sm text-gray-800" required autocomplete="username" />
+    </div>
+  </div>
+
+  <div class="mb-6">
+    <label for="password" class="block text-sm font-medium text-gray-600 mb-1">Lozinka</label>
+    <div class="flex items-center border rounded-md px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-200">
+      <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+      <input id="password" name="password" [(ngModel)]="password" type="password" placeholder="Unesi lozinku"
+             class="flex-1 outline-none text-sm text-gray-800" required autocomplete="current-password" />
+    </div>
+  </div>
+
+  @if (error) {
+    <p class="mb-4 text-sm text-red-600 text-center" role="alert">{{ error }}</p>
+  }
+
+  <button type="submit" [disabled]="submitting"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 rounded-md transition-all shadow disabled:opacity-50">
+    {{ submitting ? 'Prijava u toku...' : '🔓 Prijavi se' }}
+  </button>
+</form>

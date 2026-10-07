@@ -1,376 +1,216 @@
-<!-- 📦 Forma za dodavanje nove haljine -->
-  <!-- <div *ngIf="backendStatus === 'cekanje'"
-      class="fixed inset-0 z-50 bg-white bg-opacity-95 flex items-center justify-center text-center p-6">
-    <div>
-      <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">
-        🔄 Učitavanje podataka...
-      </h2>
-      <p class="text-lg text-gray-600 max-w-xl mx-auto">
-        Backend server se trenutno pokreće. Ovo može potrajati i do 30 sekundi. Hvala na strpljenju 🙏
-      </p>
-    </div>
-  </div> -->
-
-<!-- 🔐 Login forma -->
-<!-- <div *ngIf="backendStatus === 'aktivno' && !token" class="max-w-sm mx-auto mt-20 bg-white rounded-2xl shadow-xl px-8 py-10 border border-gray-200"> -->
-<div *ngIf="!token" class="max-w-sm mx-auto mt-20 bg-white rounded-2xl shadow-xl px-8 py-10 border border-gray-200">
-  <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">🔐 Prijava</h2>
-
-  <div class="mb-5">
-    <label class="block text-sm font-medium text-gray-600 mb-1">Korisničko ime</label>
-    <div class="flex items-center border rounded-md px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-200">
-      <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" stroke-width="2"
-           viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M5.121 17.804A6 6 0 0112 15a6 6 0 016.879 2.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-      <input [(ngModel)]="username" placeholder="Unesi korisničko ime"
-             class="flex-1 outline-none text-sm text-gray-800" required autocomplete="off" />
-    </div>
-  </div>
-
-  <div class="mb-6">
-    <label class="block text-sm font-medium text-gray-600 mb-1">Lozinka</label>
-    <div class="flex items-center border rounded-md px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-200">
-      <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" stroke-width="2"
-           viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M12 11c0-1.105.895-2 2-2s2 .895 2 2m-6 0c0-1.105.895-2 2-2s2 .895 2 2m-6 0c0-1.105.895-2 2-2s2 .895 2 2m-6 0c0-1.105.895-2 2-2s2 .895 2 2m2 2v2m0 0v4m0-4h-4m4 0h4" />
-      </svg>
-      <input [(ngModel)]="password" type="password" placeholder="Unesi lozinku"
-             class="flex-1 outline-none text-sm text-gray-800" required autocomplete="off" />
-    </div>
-  </div>
-
-  <button (click)="login()"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 rounded-md transition-all shadow">
-    🔓 Prijavi se
-  </button>
-</div>
-
-
-  <ng-container *ngIf="!ucitavanje">
-
-    <!-- 👤 Logout dugme (vidljivo kada postoji token) -->
-<!-- <ng-container *ngIf="backendStatus === 'aktivno' && !!token"> -->
-<ng-container *ngIf="!!token">
+@if (!auth.isLoggedIn()) {
+  <app-login (loggedIn)="onLoggedIn()" />
+} @else {
+  <!-- 👤 Odjava -->
   <div class="fixed top-4 right-4 z-50">
-  <button (click)="logout()"
-          class="flex items-center gap-2 bg-gray-100 hover:bg-red-100 text-red-600 border border-red-300 font-medium text-sm px-3 py-1.5 rounded-full shadow-sm transition">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
-         viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
-    </svg>
-    Odjava
-  </button>
+    <button type="button" (click)="logout()"
+            class="flex items-center gap-2 bg-gray-100 hover:bg-red-100 text-red-600 border border-red-300 font-medium text-sm px-3 py-1.5 rounded-full shadow-sm transition">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
+      </svg>
+      Odjava
+    </button>
   </div>
+
+  <!-- ➕ Nova haljina -->
   <section class="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-lg mb-10">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-      ➕ Dodaj novu haljinu
-    </h2>
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">➕ Dodaj novu haljinu</h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <label class="block">
         <span class="text-sm font-medium text-gray-700">Naziv</span>
-        <input [(ngModel)]="novaHaljina.naziv"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-              placeholder="Unesi naziv haljine" />
+        <input [(ngModel)]="newDress.naziv" placeholder="Unesi naziv haljine"
+               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" />
       </label>
 
       <label class="block">
         <span class="text-sm font-medium text-gray-700">Cena (RSD)</span>
-        <input type="number"
-              [(ngModel)]="novaHaljina.cena"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-              placeholder="npr. 3990" />
+        <input type="number" [(ngModel)]="newDress.cena" placeholder="npr. 3990" min="0"
+               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" />
       </label>
-
 
       <label class="block">
         <span class="text-sm font-medium text-gray-700">Izaberi sliku</span>
-        <input type="file"
-              (change)="uploadSlika($event)"
-              class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+        <input type="file" accept="image/*" (change)="uploadDressImage($event)"
+               class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
       </label>
     </div>
 
     <div class="mt-6 space-y-4">
-      <div *ngFor="let l of novaHaljina.lager; let i = index" class="flex items-center gap-4">
-        <div class="w-1/2">
-          <label class="block text-sm font-medium text-gray-700">Boja {{ i + 1 }}</label>
-          <input [(ngModel)]="l.boja"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                placeholder="npr. crvena" />
+      @for (stock of newDress.lager; track $index) {
+        <div class="flex items-center gap-4">
+          <div class="w-1/2">
+            <label class="block text-sm font-medium text-gray-700">Boja {{ $index + 1 }}</label>
+            <input [(ngModel)]="stock.boja" placeholder="npr. crvena"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" />
+          </div>
+          <div class="w-1/2">
+            <label class="block text-sm font-medium text-gray-700">Količina</label>
+            <input type="number" [(ngModel)]="stock.kolicina" min="0"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" />
+          </div>
         </div>
-        <div class="w-1/2">
-          <label class="block text-sm font-medium text-gray-700">Količina</label>
-          <input type="number"
-                [(ngModel)]="l.kolicina"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                min="0" />
-        </div>
-      </div>
+      }
+      <button type="button" (click)="addStockRow()" class="text-sm text-blue-600 hover:underline">
+        + Dodaj još jednu boju
+      </button>
     </div>
 
     <div class="mt-6">
-    <button type="button"
-            (click)="dodajHaljinu()"
-            [disabled]="uploadInProgress || !novaHaljina.slika"
-            class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-md shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Sačekaj da se slika učita pre dodavanja">
-        ✅ Dodaj haljinu
+      <button type="button" (click)="addDress()" [disabled]="imageUploading || !newDress.slika || !newDress.naziv"
+              title="Sačekaj da se slika učita pre dodavanja"
+              class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-md shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
+        {{ imageUploading ? 'Slika se učitava...' : '✅ Dodaj haljinu' }}
       </button>
     </div>
-
   </section>
 
-  <!-- 🎨 Toolbar za filtriranje -->
+  <!-- 🎨 Filteri -->
   <div class="max-w-5xl mx-auto px-4 mb-6">
-  <div class="bg-white shadow-sm border rounded-xl p-4 space-y-4 sm:space-y-0 sm:flex sm:items-end sm:justify-between sm:gap-6">
-
-    <!-- Filter po boji -->
-    <div class="flex-1">
-      <label for="filterBoja" class="block text-sm font-medium text-gray-700 mb-1">
-        🎨 Filtriraj po boji
-      </label>
-      <input id="filterBoja"
-            [(ngModel)]="filterBoja"
-            placeholder="npr. crvena, plava..."
-            class="w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm" />
-      <div *ngIf="filterBoja" class="mt-1 text-right">
-        <button (click)="filterBoja = ''"
-                class="text-xs text-gray-500 hover:text-red-600 transition">
-          ❌ Očisti boju
-        </button>
-      </div>
-    </div>
-
-    <!-- Filter po nazivu -->
-    <div class="flex-1">
-      <label for="filterName" class="block text-sm font-medium text-gray-700 mb-1">
-        🔠 Filtriraj po nazivu
-      </label>
-      <input id="filterName"
-            [(ngModel)]="filterName"
-            placeholder="npr. elegantna, duga haljina..."
-            class="w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm" />
-      <div *ngIf="filterName" class="mt-1 text-right">
-        <button (click)="filterName = ''"
-                class="text-xs text-gray-500 hover:text-red-600 transition">
-          ❌ Očisti naziv
-        </button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-
-
-  <!-- 🛍️ Prikaz svih haljina -->
-<section class="grid grid-cols-1 gap-6 px-4 max-w-xl mx-auto">
-  <div *ngFor="let h of filterByName"
-       class="relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition">
-
-    <!-- 🗑️ Dugme za brisanje -->
-    <button type="button" (click)="obrisiHaljinu(h._id)"
-            class="absolute top-2 right-2 text-gray-400 hover:text-red-600 transition"
-            title="Obriši haljinu">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-           viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-
-    <img [src]="h.slika" alt="{{ h.naziv }}" class="w-full h-auto object-contain" />
-
-    <div class="p-4">
-      <h3 class="text-lg font-semibold text-gray-800 mb-4">{{ h.naziv }}</h3>
-      <p class="text-sm text-gray-600 mb-2">💰 Cena: <span class="font-medium text-green-600">{{ h.cena }} RSD</span></p>
-
-      <div *ngFor="let b of h.lager"
-           class="flex items-center justify-between text-sm mb-2 text-gray-700 font-medium px-2">
-        <div>
-          <span class="font-semibold">{{ b.boja }}</span>: {{ b.kolicina }}
-        </div>
-        <div class="flex gap-1">
-          <button type="button" (click)="obrisiBoju(h._id, b.boja)"
-          class="bg-gray-200 hover:bg-red-500 hover:text-white text-gray-700 text-xs px-2 py-1 rounded-md transition shadow">
-              ✖
-          </button>
-          <button type="button" (click)="otvoriFormuZaNarudzbinu(h, b.boja)"
-                  class="bg-indigo-500 hover:bg-indigo-600 text-white text-xs px-3 py-1 rounded-md shadow">
-            🛒 Poruči
-          </button>
-          <button type="button" (click)="dodajUKorpu(h, b.boja)"
-                  class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3 py-1 rounded-md shadow">
-            ➕ Korpa
-          </button>
-        </div>
-      </div>
-
-      <!-- ➕ Dodaj boju -->
-      <div class="mt-4 border-t pt-4">
-        <h4 class="text-sm text-gray-700 font-semibold mb-2">➕ Dodaj boju</h4>
-        <input [(ngModel)]="novaBoja[h._id]" placeholder="Boja"
-               class="border border-gray-300 px-2 py-1 rounded-md text-sm focus:outline-none focus:ring focus:ring-blue-200 mr-2" />
-        <input type="number" [(ngModel)]="novaKolicina[h._id]" placeholder="Količina"
-               class="border border-gray-300 px-2 py-1 rounded-md text-sm w-20 focus:outline-none focus:ring focus:ring-blue-200 mr-2" />
-        <button type="button" (click)="dodajIliAzurirajBoju(h._id, novaBoja[h._id], novaKolicina[h._id])"
-                class="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded-md">
-          ✅ Dodaj
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-  <!-- 🛒 Korpa -->
-  <!-- 🛒 Korpa -->
-<section *ngIf="korpa.length > 0" class="max-w-4xl mx-auto mt-10 bg-white p-6 rounded-2xl shadow">
-  <h2 class="text-2xl font-bold text-gray-800 mb-4">🛒 Korpa</h2>
-
-  <ul class="space-y-4">
-    <li *ngFor="let item of korpa; let i = index"
-        class="border rounded-xl p-4 shadow-sm flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition">
-
-      <div class="flex items-center gap-4">
-        <img [src]="item.slika" alt="{{ item.naziv }}" class="w-16 h-16 object-contain rounded-md border" />
-
-        <div>
-          <div class="font-semibold text-gray-800">{{ item.naziv }} ({{ item.boja }})</div>
-          <div class="text-sm text-gray-600">Količina: {{ item.kolicina }}</div>
-        </div>
-      </div>
-
-      <button (click)="ukloniIzKorpe(i)"
-              class="text-gray-400 hover:text-red-600 transition" title="Ukloni iz korpe">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-             viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </li>
-  </ul>
-
-  <!-- 📎 Screenshot -->
-  <div class="mt-6 space-y-4">
-    <input type="file" (change)="uploadScreenshot($event)"
-           class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-  </div>
-
-  <!-- ✅ Dugme za slanje -->
-  <div class="mt-6 flex justify-end">
-    <button (click)="posaljiKorpu()"
-            [disabled]="screenshotUploadInProgress"
-            class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-md shadow disabled:opacity-50">
-      ✅ Pošalji sve iz korpe
-    </button>
-  </div>
-</section>
-
-
-
-  <section class="max-w-4xl mx-auto mt-10 bg-white p-6 rounded-2xl shadow-lg">
-  <!-- 📅 Filter po datumu -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-    <div class="flex flex-wrap gap-4">
-      <div class="flex items-center gap-2">
-        <label class="text-sm font-medium text-gray-700">📆 Od:</label>
-        <input type="date" [(ngModel)]="datumOd" class="border rounded-lg px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring focus:ring-blue-200" />
-      </div>
-      <div class="flex items-center gap-2">
-        <label class="text-sm font-medium text-gray-700">📆 Do:</label>
-        <input type="date" [(ngModel)]="datumDo" class="border rounded-lg px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring focus:ring-blue-200" />
-      </div>
-    </div>
-    <button (click)="resetujFilter()" class="text-sm text-blue-600 hover:underline whitespace-nowrap">✖️ Ukloni filter</button>
-  </div>
-
-  <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Sve porudžbine</h2>
-
-  <div *ngIf="grupisaneNarudzbine.length === 0" class="text-gray-500 text-center py-10">
-    Trenutno nema porudžbina za prikaz.
-  </div>
-
-  <div *ngIf="grupisaneNarudzbine.length > 0" class="space-y-8">
-    <div *ngFor="let grupa of grupisaneNarudzbine" class="rounded-xl border border-gray-200 bg-gray-50 p-6 shadow-sm transition hover:shadow-md">
-
-      <!-- Screenshot (ako postoji) -->
-      <div *ngIf="grupa.kupac.screenshot" class="mb-4">
-        <a [href]="grupa.kupac.screenshot" target="_blank" class="block w-fit hover:opacity-90 transition">
-          <img [src]="grupa.kupac.screenshot" class="w-64 border rounded-lg shadow-sm" alt="Screenshot porudžbine" />
-        </a>
-      </div>
-
-      <!-- Lista proizvoda -->
-      <ul class="space-y-4">
-        <li *ngFor="let p of grupa.proizvodi" class="flex items-start gap-4 bg-white p-4 rounded-lg shadow-sm border">
-          <img [src]="p.slika" class="w-16 h-16 object-contain border rounded-md" />
-          <div>
-            <div class="font-semibold text-gray-800">{{ p.naziv }}</div>
-            <div class="text-sm text-gray-600">Boja: <span class="font-medium">{{ p.boja }}</span></div>
-            <div class="text-sm text-gray-600">Količina: {{ p.kolicina }}</div>
-            <div class="text-sm text-gray-600">Cena: {{ p.cena * p.kolicina | number:'1.0-0' }} RSD</div>
+    <div class="bg-white shadow-sm border rounded-xl p-4 space-y-4 sm:space-y-0 sm:flex sm:items-end sm:justify-between sm:gap-6">
+      <div class="flex-1">
+        <label for="colorFilter" class="block text-sm font-medium text-gray-700 mb-1">🎨 Filtriraj po boji</label>
+        <input id="colorFilter" [(ngModel)]="colorFilter" placeholder="npr. crvena, plava..."
+               class="w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm" />
+        @if (colorFilter) {
+          <div class="mt-1 text-right">
+            <button type="button" (click)="colorFilter = ''" class="text-xs text-gray-500 hover:text-red-600 transition">❌ Očisti boju</button>
           </div>
-        </li>
+        }
+      </div>
+
+      <div class="flex-1">
+        <label for="nameFilter" class="block text-sm font-medium text-gray-700 mb-1">🔠 Filtriraj po nazivu</label>
+        <input id="nameFilter" [(ngModel)]="nameFilter" placeholder="npr. elegantna, duga haljina..."
+               class="w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm" />
+        @if (nameFilter) {
+          <div class="mt-1 text-right">
+            <button type="button" (click)="nameFilter = ''" class="text-xs text-gray-500 hover:text-red-600 transition">❌ Očisti naziv</button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- 🛍️ Katalog -->
+  <section class="grid grid-cols-1 gap-6 px-4 max-w-xl mx-auto">
+    @if (loading && dresses.length === 0) {
+      <p class="text-center text-gray-500 py-10">Učitavanje haljina...</p>
+    }
+    @for (dress of visibleDresses; track dress._id) {
+      <div class="relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition">
+        <button type="button" (click)="deleteDress(dress)" title="Obriši haljinu"
+                class="absolute top-2 right-2 text-gray-400 hover:text-red-600 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        @if (dress.slika) {
+          <img [src]="dress.slika" [alt]="dress.naziv" class="w-full h-auto object-contain" />
+        }
+
+        <div class="p-4">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">{{ dress.naziv }}</h3>
+          <p class="text-sm text-gray-600 mb-2">💰 Cena: <span class="font-medium text-green-600">{{ dress.cena }} RSD</span></p>
+
+          @for (stock of dress.lager; track stock.boja) {
+            <div class="flex items-center justify-between text-sm mb-2 text-gray-700 font-medium px-2">
+              <div><span class="font-semibold">{{ stock.boja }}</span>: {{ stock.kolicina }}</div>
+              <div class="flex gap-1">
+                <button type="button" (click)="removeColor(dress, stock.boja)" title="Obriši boju"
+                        class="bg-gray-200 hover:bg-red-500 hover:text-white text-gray-700 text-xs px-2 py-1 rounded-md transition shadow">✖</button>
+                <button type="button" (click)="openOrderDialog(dress, stock.boja)"
+                        class="bg-indigo-500 hover:bg-indigo-600 text-white text-xs px-3 py-1 rounded-md shadow">🛒 Poruči</button>
+                <button type="button" (click)="addToCart(dress, stock.boja)"
+                        class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3 py-1 rounded-md shadow">➕ Korpa</button>
+              </div>
+            </div>
+          } @empty {
+            <p class="text-sm text-gray-400 px-2 mb-2">Nema na lageru.</p>
+          }
+
+          <div class="mt-4 border-t pt-4">
+            <h4 class="text-sm text-gray-700 font-semibold mb-2">➕ Dodaj boju</h4>
+            <input [(ngModel)]="restockColor[dress._id]" placeholder="Boja"
+                   class="border border-gray-300 px-2 py-1 rounded-md text-sm focus:outline-none focus:ring focus:ring-blue-200 mr-2" />
+            <input type="number" min="1" [(ngModel)]="restockQuantity[dress._id]" placeholder="Količina"
+                   class="border border-gray-300 px-2 py-1 rounded-md text-sm w-20 focus:outline-none focus:ring focus:ring-blue-200 mr-2" />
+            <button type="button" (click)="restock(dress)"
+                    class="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded-md">✅ Dodaj</button>
+          </div>
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- 🛒 Korpa -->
+  @if (cart.length > 0) {
+    <section class="max-w-4xl mx-auto mt-10 bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">🛒 Korpa</h2>
+
+      <ul class="space-y-4">
+        @for (item of cart; track item._id + item.boja; let i = $index) {
+          <li class="border rounded-xl p-4 shadow-sm flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition">
+            <div class="flex items-center gap-4">
+              <img [src]="item.slika ?? ''" [alt]="item.naziv" class="w-16 h-16 object-contain rounded-md border" />
+              <div>
+                <div class="font-semibold text-gray-800">{{ item.naziv }} ({{ item.boja }})</div>
+                <div class="text-sm text-gray-600">Količina: {{ item.kolicina }}</div>
+              </div>
+            </div>
+            <button type="button" (click)="removeFromCart(i)" title="Ukloni iz korpe"
+                    class="text-gray-400 hover:text-red-600 transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </li>
+        }
       </ul>
 
-      <!-- Datum porudžbine -->
-      <div class="mt-4 text-right text-sm text-gray-500 italic border-t pt-2">
-        🕒 Poručeno: {{ grupa.kupac.vreme | date:'dd.MM.yyyy. HH:mm' }}
+      <div class="mt-4 text-right font-semibold text-gray-800">Ukupno: {{ cartTotal }} RSD</div>
+
+      <div class="mt-6 space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Screenshot uplate</label>
+        <input type="file" accept="image/*" (change)="uploadScreenshot($event)"
+               class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
       </div>
 
-      <!-- Dugme za brisanje -->
-      <div class="text-right mt-4">
-        <button (click)="obrisiGrupuNarudzbina(grupa.kupac.screenshot)"
-                class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 font-medium text-sm transition">
-          🗑️ Obriši porudžbinu
+      <div class="mt-6 flex justify-end">
+        <button type="button" (click)="checkoutCart()" [disabled]="screenshotUploading"
+                class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-md shadow disabled:opacity-50">
+          ✅ Pošalji sve iz korpe
         </button>
+      </div>
+    </section>
+  }
+
+  <!-- 📋 Porudžbine -->
+  <app-order-history [orders]="orders" (deleteGroup)="deleteOrderGroup($event)" (deleteOrder)="deleteOrder($event)" />
+
+  <!-- 🧾 Dijalog za pojedinačnu porudžbinu -->
+  @if (selectedDress; as dress) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg" role="dialog" aria-modal="true">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">🛍️ Poruči: {{ dress.naziv }} ({{ selectedColor }})</h3>
+
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700">Screenshot uplate</label>
+          <input type="file" accept="image/*" (change)="uploadScreenshot($event)"
+                 class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+        </div>
+
+        <div class="mt-6 flex justify-end gap-4">
+          <button type="button" (click)="closeOrderDialog()"
+                  class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Otkaži</button>
+          <button type="button" (click)="placeSingleOrder()" [disabled]="screenshotUploading"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            ✅ Pošalji porudžbinu
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-</section>
-
-
-  <!-- 🧾 Popup forma za narudžbinu -->
-  <div *ngIf="izabranaHaljina" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg">
-      <h3 class="text-xl font-semibold text-gray-800 mb-4">
-        🛍️ Poruči: {{ izabranaHaljina.naziv }} ({{ izabranaBoja }})
-      </h3>
-
-      <div class="space-y-4">
-        <!-- <input [(ngModel)]="formaKupca.ime" placeholder="Ime"
-              class="w-full border p-2 rounded" />
-        <input [(ngModel)]="formaKupca.prezime" placeholder="Prezime"
-              class="w-full border p-2 rounded" />
-        <input [(ngModel)]="formaKupca.adresa" placeholder="Adresa"
-              class="w-full border p-2 rounded" />
-        <input [(ngModel)]="formaKupca.telefon" placeholder="Broj telefona"
-              class="w-full border p-2 rounded" /> -->
-        <input type="file"
-        (change)="uploadScreenshot($event)"
-        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-      </div>
-
-      <div class="mt-6 flex justify-end gap-4">
-        <button (click)="izabranaHaljina = null"
-                class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">
-          Otkaži
-        </button>
-        <button (click)="posaljiNarudzbinu()"
-          [disabled]="screenshotUploadInProgress"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-          ✅ Pošalji porudžbinu
-        </button>
-
-      </div>
-    </div>
-  </div>
-  </ng-container>
+  }
+}
