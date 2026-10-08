@@ -1,4 +1,9 @@
 # Local development profile: activate with SPRING_PROFILES_ACTIVE=dev
+# Expects the database from `docker compose up -d db` (published on localhost:5433).
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/dress_inventory}
+
 logging:
   level:
     io.github.dobrosavljevicnenad.dressinventory: DEBUG

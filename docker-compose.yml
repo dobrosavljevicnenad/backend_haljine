@@ -1,0 +1,48 @@
+# Local stack: PostgreSQL + Spring Boot API + Angular app behind nginx.
+#   docker compose up --build
+#   app:     http://localhost:8081   (login: admin / admin unless overridden in .env)
+#   API:     http://localhost:8080/swagger-ui.html
+name: dress-inventory
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dress_inventory
+      POSTGRES_USER: dress
+      POSTGRES_PASSWORD: dress
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432" # host port 5433 avoids clashing with a locally installed PostgreSQL
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dress -d dress_inventory"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://db:5432/dress_inventory
+      DB_USERNAME: dress
+      DB_PASSWORD: dress
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"
+
+volumes:
+  db-data:
