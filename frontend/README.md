@@ -1,27 +1,30 @@
-# Webapp
+# Dress Inventory - Admin app
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.17.
+Angular 17 client for the [Dress Inventory API](../README.md): catalog and stock management,
+cart checkout with payment screenshots and order history.
 
-## Development server
+## Commands
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+| Command | Description |
+| --- | --- |
+| `npm start` | Dev server on http://localhost:4200, talks to the API on http://localhost:8080 |
+| `npm run build` | Production build (`dist/webapp/browser`), API expected on the same origin under `/api` |
+| `npm run test:ci` | Unit tests once in headless Chrome |
+| `npm test` | Unit tests in watch mode |
 
-## Code scaffolding
+## Structure
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+```
+src/app
+├── core            API contract (models), AuthService, JWT interceptor, InventoryApiService
+├── login           login form
+├── orders          order history with date filter and grouping by checkout
+└── dress-list      dashboard: catalog, stock per color, cart, single-order dialog
+```
 
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+- All HTTP calls go through `InventoryApiService`; components never build URLs.
+- The JWT is kept in a signal and `localStorage` (SSR-safe) and attached by a functional interceptor,
+  which also logs the user out when the API answers 401.
+- The API base URL comes from `src/environments` (`/api` in production behind nginx,
+  `http://localhost:8080/api` in development).
+- In Docker the app is served by nginx, which also proxies `/api` to the backend (see `nginx.conf`).

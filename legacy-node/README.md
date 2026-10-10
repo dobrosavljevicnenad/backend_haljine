@@ -1,5 +1,9 @@
 # Dress Inventory & Order Management System
 
+> **Legacy implementation.** This is the original Node.js/Express + MongoDB backend. It has been
+> replaced by the Spring Boot service in [`../backend`](../backend) and is kept only as a reference
+> for the API contract. See the [main README](../README.md#migration-from-nodejs).
+
 Full stack web application for managing boutique dress inventory with real-time stock tracking, secure ordering, and concurrency-safe updates.
 
 ---
